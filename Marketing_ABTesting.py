@@ -80,12 +80,11 @@ pd.set_option('display.float_format', lambda x: '%.4f' % x)
 
 print(os.getcwd())
 file = os.getcwd()
-filePath = "Git_Project/dataset/marketing_AB.csv"
-
+filePath = "GitHub_Projects\A-B_Testing_Marketing_campaign\data\marketing_AB.csv"
 df = pd.read_csv(filePath)
 df.head()
 
-# 'ad' ve 'psa' gruplarını filtreleyelim
+# 'ad' ve 'psa'
 ad_group = df[df['test group'] == 'ad']
 psa_group = df[df['test group'] == 'psa']
 
@@ -109,6 +108,19 @@ psa_conversion_rate = psa_group['converted'].mean()
 
 print(f"Ad Group Conversion Rate: {ad_conversion_rate}")
 print(f"PSA Group Conversion Rate: {psa_conversion_rate}")
+
+# Met deze code kun je de conversiepercentages van de twee groepen in een grafiek visualiseren.
+# Gegevens voor de grafiek voorbereiden
+conversion_rates = [ad_conversion_rate, psa_conversion_rate]
+categories = ['Ad Groep', 'PSA Groep']
+
+# Maak de grafiek
+plt.figure(figsize=(8, 6))
+sns.barplot(x=categories, y=conversion_rates, hue=categories, palette='Blues_d', legend=False)
+plt.title('Vergelijking van Conversiepercentages', fontsize=16)
+plt.xlabel('Groep', fontsize=12)
+plt.ylabel('Conversiepercentage', fontsize=12)
+plt.show()
 
 #***********************************************************************************************
 #  Onderzoek de dataset verder:
@@ -185,7 +197,10 @@ hour_df.reset_index(inplace=True)
 
 """
 Prime time uren (19:00–23:00)
-De Ad-groep wordt meestal meer vertegenwoordigd in deze uren. Het is bekend dat gebruikers gedurende deze tijdstippen actiever zijn op digitale apparaten en meer aankopen doen. Daarom kan het feit dat de Ad-groep in deze uren meer vertoningen ontvangt, de conversieratio positief beïnvloeden.
+De Ad-groep wordt meestal meer vertegenwoordigd in deze uren. 
+Het is bekend dat gebruikers gedurende deze tijdstippen actiever zijn op digitale apparaten en 
+meer aankopen doen. Daarom kan het feit dat de Ad-groep in deze uren meer vertoningen ontvangt, 
+de conversieratio positief beïnvloeden.
 
 Resultaat:
 Met deze analyse kunnen we het volgende duidelijk stellen:
@@ -266,8 +281,8 @@ conversion_rate_by_period = (converted_counts_pertime / total_counts_pertime).fi
 # Maak een DataFrame aan
 period_df = pd.DataFrame({
     'conversion_rate': conversion_rate_by_period,
-    'total_users': total_counts,
-    'converted_users': converted_counts
+    'total_users': total_counts_pertime,
+    'converted_users': converted_counts_pertime
 }).fillna(0)
 
 #Index hernoemen naar 'time_period'
@@ -331,7 +346,17 @@ numeric_df = ad_group[['total ads', 'most ads hour']]
 correlations = [ad_group['converted'].corr(ad_group[col]) for col in numeric_df.columns]
 
 for col, corr in zip(numeric_df, correlations):
-    print(f"{col} correlatie met converted: {corr}")
+    trend = "positief" if corr > 0 else "negatief" if corr < 0 else "geen"
+    print(f"{col}: correlatie = {corr:.2f} ({trend})")
+
+# Bar plot met correlaties
+plt.figure(figsize=(6, 4))
+sns.barplot(x=numeric_df.columns, y=correlations, palette='coolwarm')
+plt.ylim(-1, 1)
+plt.title('Correlatie met Converted')
+plt.ylabel('Correlatiecoëfficiënt')
+plt.axhline(0, color='gray', linestyle='--')
+plt.show()
 
 #Algemene Opmerking:
 #**********************************************
@@ -417,7 +442,7 @@ De PSA groep vertoont ook een stijging, maar met enige fluctuatie."""
 #  Visualisatie:
 # -- Conversieratio op Basis van Aantal Advertenties
 #*********************************
-import matplotlib.pyplot as plt
+
 
 plt.figure(figsize=(10, 6))
 plt.plot(ad_conversion['ads_bin'].astype(str), ad_conversion['conversion_rate'], marker='o', label='Ad')
@@ -532,17 +557,18 @@ plot_conversion_by_hour(ad_hour, psa_hour)
 # Visuele correlatieanalyse:
 #***********************************************
 
-def correlation_matrix_heatmap(dataframe, target = 'converted'):
+def correlation_matrix_boxplot(dataframe, target='converted'):
     numeric_df = dataframe[['total ads', 'most ads hour']]
     for col in numeric_df:
         plt.figure(figsize=(6, 4))
-        sns.scatterplot(data=dataframe, x='converted', y=col)
-        plt.title(f'Converted vs {col}')
+        sns.boxplot(data=dataframe, x=target, y=col)
+        plt.title(f'{col} per {target}')
         plt.show()
 
 
-correlation_matrix_heatmap(ad_group)
-correlation_matrix_heatmap(psa_group)
+
+correlation_matrix_boxplot(ad_group)
+correlation_matrix_boxplot(psa_group)
 
 #############################################
 #   A/B TESTING
@@ -610,7 +636,7 @@ print('Test Stat = %.4f, p-value = %.4f' % (test_stat, pvalue))
 
 #-->> Test Stat = 0.1423, p-value = 0.0000
 """
-BDe ad-groep bevat 564.577 observaties.
+De ad-groep bevat 564.577 observaties.
 De Shapiro-Wilk test is krachtig bij kleine en middelgrote datasets.
 Bij zeer grote datasets (N > 5000) kan deze test echter fout-positieve resultaten geven.
 
@@ -758,8 +784,7 @@ Conclusie:
 Conversiestijging is grotendeels te danken aan advertenties.
 
 
-2. In hoeverre is het succes toe te schrijven aan de advertenties?
-Het effect van de advertenties werd direct getest. In de A/B-test:
+3. Het effect van de advertenties werd direct getest. In de A/B-test:
 
 De 'ad' groep werd blootgesteld aan advertenties.
 
@@ -776,7 +801,7 @@ Er was een zwakke, maar positieve relatie tussen het aantal vertoningen (totale 
 Conclusie: Het succes in de conversie is grotendeels afhankelijk van de advertenties.
 
 *******************************************
-Stratejik Öneriler – Pazarlama İçin
+Strategische Aanbevelingen – Voor Marketing
 *******************************************
 Investeer meer in advertenties: De Ad-groep converteerde significant beter dan de PSA-groep.
 
